@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <title>Warframe PoE clock</title>
+  <script> var days = 3; </script>
+  <style>
+
+:root {
+  --days: 3;
+  --hour-height: 30px;
+  --hour-width: var(--hour-height);
+  --date-height: calc(var(--hour-height) * 24);
+  --date-width: 90px;
+  --day-night-width: 180px;
+  --container-height: calc(var(--days) * var(--date-height));
+  --container-width: calc(calc(var(--date-width) + var(--hour-width)) + var(--day-night-width));
+  --timer-width: 400px;
+  --timer-height: 50px;
+}
+
+body {
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  min-width: var(--timer-width);
+  width: var(--container-width);
+}
+
+#container {
+  margin-top: var(--timer-height);
+  display: flex;
+  flex-flow: column wrap;
+  height: var(--container-height);
+  width: var(--container-width);
+  overflow: auto;
+  align-content: flex-start;
+  border: 1px solid black;
+  position: relative;
+}
+
+#now {
+  position: absolute;
+  top: 0;
+  left: 90px;
+  width: 30px;
+  height: 1px;
+  z-index: 2;
+  background: red;
+}
+
+.date {
+  --height: var(--date-height);
+  width: var(--date-width);
+}
+.hour {
+  --height: var(--hour-height);
+  width: var(--hour-width);
+}
+.date:nth-child(2n+1) { background: #eee; }
+.hour:nth-child(2n) { background: #ecfaff; }
+.day {
+  --height: 50px;
+  background: #ffeb79;
+}
+.night {
+  --height: 25px;
+  background: #a3a3ff;
+}
+.day, .night { width: var(--day-night-width); }
+.date, .hour, .day, .night {
+  align-self: flex-start;
+  text-align: center;
+  height: var(--height);
+  line-height: var(--height);
+}
+
+
+#timer {
+  background: white;
+  position: fixed;
+  width: var(--timer-width);
+  height: var(--timer-height);
+  line-height: var(--timer-height);
+  top: 0;
+  font-size: 32px;
+  z-index: 3;
+}
+#night { color: darkblue; }
+#day { color: orange; }
+#night, #day {
+  font-weight: bold;
+  display: none;
+}
+#timer[data-cycle=night] #night, #timer[data-cycle=day] #day { display: inline }
+
+  </style>
+  <script>
+
+var dayCycle = ['day', 'night'];
+var minutesDuration = {
+  'night': 50,
+  'day': 100,
+  'full': -150 // minus because we use full cycles only when going back in time
+};
+var endTimes = [];
+
+function addToContainer(class_, text, overWritePx) {
+  var style = typeof overWritePx == 'number' ? ' style="height:'+overWritePx+'px"' : '';
+  $('#container').append('<div class="' + class_ + '"' + style + '>' + text + '</div>');
+}
+
+function dateToString(date) {
+  // YYYY-MM-DD to avoid confusion with MM/DD/YYYY and DD.MM.YYYY
+  return "" + date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate()
+}
+
+function timeToString(date) {
+  // "HH:MM:SS"
+  var str = date.getHours().toString().padStart(2, '0');
+  str += ':' + date.getMinutes().toString().padStart(2, '0');
+  str += ':' + date.getSeconds().toString().padStart(2, '0');
+  return str;
+}
+
+function countdownStr(time) {
+  time = Math.floor(time / 1000); // get rid of milisec
+  var str = ' ' + (time%60).toString().padStart(2, '0') + 's';
+  time = Math.floor(time / 60);
+  str = ' ' + (time%60).toString().padStart(2, '0') + 'm' + str;
+  time = Math.floor(time / 60);
+  str = '' + time + 'h' + str;
+  return str;
+}
+
+function stripTime(date) {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+}
+
+function changeDate(date, cycle) {
+  var minutes = minutesDuration[cycle];
+  date.setMinutes(date.getMinutes() + minutes);
+}
+
+function updateTimer() {
+  var now = new Date();
+  var px = (now - startLimit) / (1000 * 60 * 2);
+  $('#now').css({top: ''+px+'px'});
+  
+  try {
+    while(now > endTimes[0]['date']) {
+      endTimes.shift();
+    }
+  }
+  catch (e) {
+    if(e.name == 'TypeError')
+      window.location.reload();
+    else
+      throw e;
+  }
+  $('#timer').attr('data-cycle', endTimes[0]['cycle']);
+  $('#countdown').html(countdownStr(endTimes[0]['date'] - now));
+}
+
+  </script>
+</head>
+<body>
+  <div id="container"><div id="now"></div></div>
+  <div id="timer"><span id="night">Night</span><span id="day">Day</span> ends in <span id="countdown"></span></div>
+  <script>
+
+var dateOnTheLeft = new Date();
+var startLimit = new Date();
+
+// add dates
+for(let i=0; i<days; ++i) {
+  addToContainer('date', dateToString(dateOnTheLeft));
+  dateOnTheLeft.setDate(dateOnTheLeft.getDate() + 1);
+}
+// add hours
+for(let i=0; i<days; ++i) {
+  for(let j=0; j<24; ++j) {
+    addToContainer('hour', j);
+  }
+}
+
+stripTime(startLimit); // last midnight
+stripTime(dateOnTheLeft); // end limit, 3 days from now midnight
+
+$.getJSON('https://cors.io/?http://content.warframe.com/dynamic/worldState.php', function(data) {
+  var cetus = data.SyndicateMissions.find(mission => mission.Tag == 'CetusSyndicate');
+  try {
+    var activation = new Number(cetus.Activation.$date.$numberLong);
+    localStorage.setItem('activation', activation);
+  }
+  catch (e) {
+    if(e.name == 'TypeError') {
+      var activation = new Number(localStorage.getItem('activation'));
+      if(activation == 0) {
+        window.setTimeout(window.location.reload.bind(window.location), 30000);
+        return;
+      }
+    }
+    else
+      throw e;
+  }
+  var date = new Date(activation);
+  // go back a few full cycles
+  while(date > startLimit) {
+    changeDate(date, 'full');
+  }
+  for(let i=0; date < dateOnTheLeft; ++i) {
+    let first = false;
+    let strTime = '';
+    
+    if(date < startLimit)
+      first = true;
+    else
+      strTime = timeToString(date) + ' - ';
+    
+    let cycle = dayCycle[i%2]; // day or night
+    changeDate(date, cycle); // go forward 50/100 minutes
+    
+    if(date < startLimit)
+      continue;
+    
+    // first and last cycles are not full; we don't add time because they can be too short to display
+    if(first) {
+      let length = (date - startLimit) / (1000 * 60 * 2);
+      addToContainer(cycle, '', length);
+    }
+    else if(date > dateOnTheLeft) {
+      let length = (dateOnTheLeft - endTimes[endTimes.length-1].date) / (1000 * 60 * 2);
+      addToContainer(cycle, '', length);
+    }
+    else {
+      addToContainer(cycle, strTime + timeToString(date));
+      endTimes.push({cycle: cycle, date: new Date(+date)});
+    }
+  }
+  updateTimer();
+  window.setInterval(updateTimer, 1000);
+});
+
+  </script>
+</body>
+</html>
