@@ -192,7 +192,7 @@ stripTime(dateOnTheLeft); // end limit, 3 days from now midnight
 $.getJSON('https://cors.io/?http://content.warframe.com/dynamic/worldState.php', function(data) {
   var cetus = data.SyndicateMissions.find(mission => mission.Tag == 'CetusSyndicate');
   try {
-    var activation = new Number(cetus.Activation.$date.$numberLong);
+    var activation = new Number(cetus.Expiry.$date.$numberLong);
     localStorage.setItem('activation', activation);
   }
   catch (e) {
