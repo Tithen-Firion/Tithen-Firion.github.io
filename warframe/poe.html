@@ -262,15 +262,17 @@ for(let i=0; i<days; ++i) {
 stripTime(startLimit); // last midnight
 stripTime(dateOnTheLeft); // end limit, 3 days from now midnight
 
-$.get('https://allorigins.me/get?method=raw&url=http%3A%2F%2Fcontent.warframe.com%2Fdynamic%2FworldState.php&callback=?', function(data){
-  var cetus = JSON.parse(data).SyndicateMissions.find(mission => mission.Tag == 'CetusSyndicate');
+$.getJSON('https://api.warframestat.us/pc/cetusCycle', function(data){
+  let activation;
   try {
-    var activation = new Number(cetus.Expiry.$date.$numberLong);
+    activation = (new Date(data.expiry)).getTime();
+    if(data.isDay)
+      activation += 3000000;
     localStorage.setItem('activation', activation);
   }
   catch (e) {
     if(e.name == 'TypeError') {
-      var activation = new Number(localStorage.getItem('activation'));
+      activation = new Number(localStorage.getItem('activation'));
       if(activation == 0) {
         window.setTimeout(window.location.reload.bind(window.location), 30000);
         return;
