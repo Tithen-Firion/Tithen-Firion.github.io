@@ -312,8 +312,8 @@ $.getJSON('https://api.warframestat.us/pc/cetusCycle', function(data){
     }
     else {
       addToContainer(cycle, strTime + timeToString(date));
-      endTimes.push({cycle: cycle, date: new Date(+date)});
     }
+    endTimes.push({cycle: cycle, date: new Date(+date)});
   }
   updateTimer();
   window.setInterval(updateTimer, 1000);
