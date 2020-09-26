@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>
+    const GAME_NAME = 'Harry Potter and the Goblet of Fire';
+    const EXE_NAME = 'gof_f.exe';
+    const EXTENSION = '.exe';
+    const WIDTH_OFFSET = 0x8f957;
+    const HEIGHT_OFFSET = 0x8f94d;
+    const RATIO_OFFSET = 0x32571c;
+    const LITTLE_ENDIAN = true;
+  </script>
+  <title>change resolution</title>
+</head>
+<body>
+  <div id="step1">
+    <p>Select <code id="exe_name">gof_f.exe</code> file:</p>
+    <input type="file" id="exe">
+  </div>
+  <div id="step2" style="display: none">
+    <p>Now select the resolution and click Save. Your screen resolution is <span id="res"></span>.</p>
+    <select id="resolution">
+      <option value="800x600">800x600</option>
+      <option value="1024x768">1024x768</option>
+      <option value="1280x720">1280x720</option>
+      <option value="1280x800">1280x800</option>
+      <option value="1280x1024">1280x1024</option>
+      <option value="1360x768">1360x768</option>
+      <option value="1366x768">1366x768</option>
+      <option value="1440x900">1440x900</option>
+      <option value="1536x864">1536x864</option>
+      <option value="1600x900">1600x900</option>
+      <option value="1680x1050">1680x1050</option>
+      <option value="1920x1080">1920x1080</option>
+      <option value="1920x1200">1920x1200</option>
+      <option value="2048x1152">2048x1152</option>
+      <option value="2560x1080">2560x1080</option>
+      <option value="2560x1440">2560x1440</option>
+      <option value="3440x1440">3440x1440</option>
+      <option value="3840x2160">3840x2160</option>
+      <option value="custom">custom</option>
+    </select>
+    <button id="save">Save</button>
+  </div>
+
+  <script>
+
+// read file (blob) as array buffer asynchronously
+const readFile = file => new Promise(resolve => {
+  let reader = new FileReader();
+  reader.onload = e => {
+    resolve(e.target.result);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+const saveAsFile = (data, name, type) => {
+  const blob = new Blob([data], {type: type}),
+        a = document.createElement('a'),
+        url = window.URL.createObjectURL(blob);
+  a.href = url;
+  a.download = name;
+  a.style = 'display: none';
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  a.remove();
+};
+
+const save = () => {
+  const [width, height] = document.querySelector('#resolution').value.split('x').map(x => parseInt(x));
+  view.setInt16(WIDTH_OFFSET, width, LITTLE_ENDIAN);
+  view.setInt16(HEIGHT_OFFSET, height, LITTLE_ENDIAN);
+  view.setFloat32(RATIO_OFFSET, width/height, LITTLE_ENDIAN);
+  
+  saveAsFile(view, EXE_NAME, 'octet/stream');
+};
+
+const optionSelected = () => {
+  if(document.querySelector('#resolution').value === 'custom') {
+    let customResolution = prompt('Enter resolution in width x height format:');
+    const match = customResolution.match(/^\s*(\d+)\s*x\s*(\d+)\s*$/);
+    if(match) {
+      customResolution = `${match[1]}x${match[2]}`;
+      const opt = document.createElement('option');
+      opt.value = customResolution;
+      opt.innerHTML = customResolution;
+      document.querySelector('#resolution').append(opt);
+      document.querySelector('#resolution').value = customResolution;
+    }
+    else {
+      document.querySelector('#resolution').value = currentRes;
+    }
+  }
+};
+
+const exeSelected = async file => {
+  const buffer = await readFile(file);
+  view = new DataView(buffer);
+  currentRes = `${view.getInt16(WIDTH_OFFSET, LITTLE_ENDIAN)}x${view.getInt16(HEIGHT_OFFSET, LITTLE_ENDIAN)}`;
+
+  document.querySelector('#resolution').value = currentRes;
+
+  document.querySelector('#step2').style.display = 'block';
+  document.querySelector('#step1').style.display = 'none';
+};
+
+let view, currentRes;
+document.title = `${GAME_NAME} - change resolution`;
+document.querySelector('#exe_name').innerHTML = EXE_NAME;
+{
+  let nativeRes = `${window.screen.width}x${window.screen.height}`;
+  document.querySelector('#res').innerHTML = nativeRes;
+  let nativeResElem = document.querySelector(`#resolution > [value="${nativeRes}"]`);
+  if(nativeResElem) {
+    nativeResElem.innerHTML += ' (recommended)';
+  }
+}
+document.querySelector('#exe').setAttribute('accept', EXTENSION);
+document.querySelector('#exe').addEventListener('change', e => { exeSelected(e.target.files[0]); });
+document.querySelector('#resolution').addEventListener('change', optionSelected);
+document.querySelector('#save').addEventListener('click', save);
+
+</script>
+</body>
+</html>
