@@ -1,324 +1,359 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111943706-1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-111943706-1"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
 
-    gtag('config', 'UA-111943706-1');
-  </script>
+		gtag('config', 'UA-111943706-1');
+	</script>
 
-  <meta charset="UTF-8">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <title>Warframe PoE clock</title>
-  <script> var days = 3; </script>
-  <style>
+	<meta charset="UTF-8">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<title>Warframe PoE clock</title>
+	<script> var days = 3;</script>
+	<style>
+		:root {
+			--days: 3;
+			--hour-height: 30px;
+			--hour-width: var(--hour-height);
+			--date-height: calc(var(--hour-height) * 24);
+			--date-width: 90px;
+			--day-night-width: 180px;
+			--container-height: calc(var(--days) * var(--date-height));
+			--container-width: calc(calc(var(--date-width) + var(--hour-width)) + var(--day-night-width));
+			--timer-width: 400px;
+			--timer-height: 50px;
+		}
 
-:root {
-  --days: 3;
-  --hour-height: 30px;
-  --hour-width: var(--hour-height);
-  --date-height: calc(var(--hour-height) * 24);
-  --date-width: 90px;
-  --day-night-width: 180px;
-  --container-height: calc(var(--days) * var(--date-height));
-  --container-width: calc(calc(var(--date-width) + var(--hour-width)) + var(--day-night-width));
-  --timer-width: 400px;
-  --timer-height: 50px;
-}
+		body {
+			font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+			min-width: var(--timer-width);
+			width: var(--container-width);
+		}
 
-body {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-  min-width: var(--timer-width);
-  width: var(--container-width);
-}
+		#content {
+			margin-top: var(--timer-height);
+		}
 
-#content {
-  margin-top: var(--timer-height);
-}
+		#container {
+			display: flex;
+			flex-flow: column wrap;
+			height: var(--container-height);
+			width: var(--container-width);
+			overflow: auto;
+			align-content: flex-start;
+			border: 1px solid black;
+			position: relative;
+		}
 
-#container {
-  display: flex;
-  flex-flow: column wrap;
-  height: var(--container-height);
-  width: var(--container-width);
-  overflow: auto;
-  align-content: flex-start;
-  border: 1px solid black;
-  position: relative;
-}
+		#now {
+			position: absolute;
+			top: 0;
+			left: 90px;
+			width: 30px;
+			height: 1px;
+			z-index: 2;
+			background: red;
+		}
 
-#now {
-  position: absolute;
-  top: 0;
-  left: 90px;
-  width: 30px;
-  height: 1px;
-  z-index: 2;
-  background: red;
-}
+		.date {
+			--height: var(--date-height);
+			width: var(--date-width);
+		}
 
-.date {
-  --height: var(--date-height);
-  width: var(--date-width);
-}
-.hour {
-  --height: var(--hour-height);
-  width: var(--hour-width);
-}
-.date:nth-child(2n+1) { background: #eee; }
-.hour:nth-child(2n) { background: #ecfaff; }
-.day {
-  --height: 50px;
-  background: #ffeb79;
-}
-.night {
-  --height: 25px;
-  background: #a3a3ff;
-}
-.day, .night { width: var(--day-night-width); }
-.date, .hour, .day, .night {
-  align-self: flex-start;
-  text-align: center;
-  height: var(--height);
-  line-height: var(--height);
-}
+		.hour {
+			--height: var(--hour-height);
+			width: var(--hour-width);
+		}
+
+		.date:nth-child(2n+1) {
+			background: #eee;
+		}
+
+		.hour:nth-child(2n) {
+			background: #ecfaff;
+		}
+
+		.day {
+			--height: 50px;
+			background: #ffeb79;
+		}
+
+		.night {
+			--height: 25px;
+			background: #a3a3ff;
+		}
+
+		.day,
+		.night {
+			width: var(--day-night-width);
+		}
+
+		.date,
+		.hour,
+		.day,
+		.night {
+			align-self: flex-start;
+			text-align: center;
+			height: var(--height);
+			line-height: var(--height);
+		}
 
 
-#timer {
-  background: white;
-  position: fixed;
-  width: var(--timer-width);
-  height: var(--timer-height);
-  line-height: var(--timer-height);
-  top: 0;
-  font-size: 32px;
-  z-index: 3;
-}
-#night { color: darkblue; }
-#day { color: orange; }
-#night, #day {
-  font-weight: bold;
-  display: none;
-}
-#timer[data-cycle=night] #night, #timer[data-cycle=day] #day { display: inline }
+		#timer {
+			background: white;
+			position: fixed;
+			width: var(--timer-width);
+			height: var(--timer-height);
+			line-height: var(--timer-height);
+			top: 0;
+			font-size: 32px;
+			z-index: 3;
+		}
 
-  </style>
-  <script>
+		#night {
+			color: darkblue;
+		}
 
-var dayCycle = ['day', 'night'];
-var minutesDuration = {
-  'night': 50,
-  'day': 100,
-  'full': -150 // minus because we use full cycles only when going back in time
-};
-var endTimes = [];
+		#day {
+			color: orange;
+		}
 
-function addToContainer(class_, text, overWritePx) {
-  var style = typeof overWritePx == 'number' ? ' style="height:'+overWritePx+'px"' : '';
-  $('#container').append('<div class="' + class_ + '"' + style + '>' + text + '</div>');
-}
+		#night,
+		#day {
+			font-weight: bold;
+			display: none;
+		}
 
-function dateToString(date) {
-  // YYYY-MM-DD to avoid confusion with MM/DD/YYYY and DD.MM.YYYY
-  return "" + date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate()
-}
+		#timer[data-cycle=night] #night,
+		#timer[data-cycle=day] #day {
+			display: inline
+		}
+	</style>
+	<script>
 
-function timeToString(date) {
-  // "HH:MM:SS"
-  var str = date.getHours().toString().padStart(2, '0');
-  str += ':' + date.getMinutes().toString().padStart(2, '0');
-  str += ':' + date.getSeconds().toString().padStart(2, '0');
-  return str;
-}
+		var dayCycle = ['day', 'night'];
+		var minutesDuration = {
+			'night': 50,
+			'day': 100,
+			'full': -150 // minus because we use full cycles only when going back in time
+		};
+		var endTimes = [];
 
-function countdownStr(time) {
-  time = Math.floor(time / 1000); // get rid of milisec
-  var str = ' ' + (time%60).toString().padStart(2, '0') + 's';
-  time = Math.floor(time / 60);
-  str = ' ' + (time%60).toString().padStart(2, '0') + 'm' + str;
-  time = Math.floor(time / 60);
-  str = '' + time + 'h' + str;
-  return str;
-}
+		function addToContainer(class_, text, overWritePx) {
+			var style = typeof overWritePx == 'number' ? ' style="height:' + overWritePx + 'px"' : '';
+			$('#container').append('<div class="' + class_ + '"' + style + '>' + text + '</div>');
+		}
 
-function stripTime(date) {
-  date.setHours(0);
-  date.setMinutes(0);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
-}
+		function dateToString(date) {
+			// YYYY-MM-DD to avoid confusion with MM/DD/YYYY and DD.MM.YYYY
+			return "" + date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate()
+		}
 
-function changeDate(date, cycle) {
-  var minutes = minutesDuration[cycle];
-  date.setMinutes(date.getMinutes() + minutes);
-}
+		function timeToString(date) {
+			// "HH:MM:SS"
+			var str = date.getHours().toString().padStart(2, '0');
+			str += ':' + date.getMinutes().toString().padStart(2, '0');
+			str += ':' + date.getSeconds().toString().padStart(2, '0');
+			return str;
+		}
 
-function updateTimer() {
-  var now = new Date();
-  var px = now.getHours() * 30 + now.getMinutes() / 2; // 1 hour is 30px long
-  $('#now').css({top: ''+px+'px'});
-  
-  try {
-    while(now > endTimes[0]['date']) {
-      endTimes.shift();
-      notified = false;
-    }
-  }
-  catch (e) {
-    if(e.name == 'TypeError')
-      window.location.reload();
-    else
-      throw e;
-  }
-  $('#timer').attr('data-cycle', endTimes[0]['cycle']);
-  $('#countdown').html(countdownStr(endTimes[0]['date'] - now));
-  if(!notified) {
-    const nextCycle = endTimes[1]['cycle'];
-    const minutesLeft = Math.floor((endTimes[0]['date'] - now) / (1000 * 60));
-    if(settings[`${nextCycle}-notification`] && minutesLeft <= settings[`${nextCycle}-notification-minutes`]) {
-      if(settings['text-notification']) {
-        new Notification('PoE clock', {
-          requireInteraction: true,
-          body: `${nextCycle} on PoE in ${minutesLeft} minutes!`,
-        });
-        notified = true;
-      }
-      if(settings['sound-notification']) {
-        new Audio('notification.ogg').play();
-        notified = true;
-      }
-    }
-  }
-}
+		function countdownStr(time) {
+			time = Math.floor(time / 1000); // get rid of milisec
+			var str = ' ' + (time % 60).toString().padStart(2, '0') + 's';
+			time = Math.floor(time / 60);
+			str = ' ' + (time % 60).toString().padStart(2, '0') + 'm' + str;
+			time = Math.floor(time / 60);
+			str = '' + time + 'h' + str;
+			return str;
+		}
 
-  </script>
+		function stripTime(date) {
+			date.setHours(0);
+			date.setMinutes(0);
+			date.setSeconds(0);
+			date.setMilliseconds(0);
+		}
+
+		function changeDate(date, cycle) {
+			var minutes = minutesDuration[cycle];
+			date.setMinutes(date.getMinutes() + minutes);
+		}
+
+		function updateTimer() {
+			var now = new Date();
+			var px = now.getHours() * 30 + now.getMinutes() / 2; // 1 hour is 30px long
+			$('#now').css({ top: '' + px + 'px' });
+
+			try {
+				while (now > endTimes[0]['date']) {
+					endTimes.shift();
+					notified = false;
+				}
+			}
+			catch (e) {
+				if (e.name == 'TypeError')
+					window.location.reload();
+				else
+					throw e;
+			}
+			$('#timer').attr('data-cycle', endTimes[0]['cycle']);
+			$('#countdown').html(countdownStr(endTimes[0]['date'] - now));
+			if (!notified) {
+				const nextCycle = endTimes[1]['cycle'];
+				const minutesLeft = Math.floor((endTimes[0]['date'] - now) / (1000 * 60));
+				if (settings[`${nextCycle}-notification`] && minutesLeft <= settings[`${nextCycle}-notification-minutes`]) {
+					if (settings['text-notification']) {
+						new Notification('PoE clock', {
+							requireInteraction: true,
+							body: `${nextCycle} on PoE in ${minutesLeft} minutes!`,
+						});
+						notified = true;
+					}
+					if (settings['sound-notification']) {
+						new Audio('notification.ogg').play();
+						notified = true;
+					}
+				}
+			}
+		}
+
+	</script>
 </head>
+
 <body>
-  <div id="content">
-    <label><input type="checkbox" id="text-notification" class="notification"> Text notification</label><br>
-    <label><input type="checkbox" id="sound-notification" class="notification"> Sound notification</label><br>
-    <label><input type="checkbox" id="night-notification" class="notification"> Alert <input id="night-notification-minutes" class="notification" type="number" min="0" max="30" value="10"> minutes before night</label><br>
-    <label><input type="checkbox" id="day-notification" class="notification"> Alert <input id="day-notification-minutes" class="notification" type="number" min="0" max="30" value="5"> minutes before day</label>
-    <div id="container"><div id="now"></div></div>
-  </div>
-  <div id="timer"><span id="night">Night</span><span id="day">Day</span> ends in <span id="countdown"></span></div>
-  <script>
+	<div id="content">
+		<label><input type="checkbox" id="text-notification" class="notification"> Text notification</label><br>
+		<label><input type="checkbox" id="sound-notification" class="notification"> Sound notification</label><br>
+		<label><input type="checkbox" id="night-notification" class="notification"> Alert <input
+				id="night-notification-minutes" class="notification" type="number" min="0" max="30" value="10"> minutes before
+			night</label><br>
+		<label><input type="checkbox" id="day-notification" class="notification"> Alert <input id="day-notification-minutes"
+				class="notification" type="number" min="0" max="30" value="5"> minutes before day</label>
+		<div id="container">
+			<div id="now"></div>
+		</div>
+	</div>
+	<div id="timer"><span id="night">Night</span><span id="day">Day</span> ends in <span id="countdown"></span></div>
+	<script>
 
-var notified = false;
-var settings = {};
-['text', 'sound', 'night', 'day'].forEach(el => {
-  const id = `${el}-notification`;
-  settings[id] = localStorage.getItem(id);
-  if(settings[id] !== null)
-    document.getElementById(id).checked = true;
-  else
-    settings[id] = false;
-});
-['night', 'day'].forEach(el => {
-  const id = `${el}-notification-minutes`;
-  settings[id] = localStorage.getItem(id);
-  if(settings[id] !== null)
-    document.getElementById(id).value = settings[id];
-  else
-    settings[id] = document.getElementById(id).value;
-});
-$('.notification').on('change', (e) => {
-  const id = e.target.id;
-  let value;
-  if(e.target.type === 'number')
-    value = e.target.value;
-  else {
-    value = e.target.checked;
-    if(id === 'text-notification')
-      Notification.requestPermission().then(function(result) {
-        if (result === 'denied' || result === 'default') {
-          document.getElementById('text-notification').checked = false;
-        }
-      });
-  }
-  localStorage.setItem(id, value);
-  settings[id] = value;
-});
+		var notified = false;
+		var settings = {};
+		['text', 'sound', 'night', 'day'].forEach(el => {
+			const id = `${el}-notification`;
+			settings[id] = localStorage.getItem(id);
+			if (settings[id] !== null)
+				document.getElementById(id).checked = true;
+			else
+				settings[id] = false;
+		});
+		['night', 'day'].forEach(el => {
+			const id = `${el}-notification-minutes`;
+			settings[id] = localStorage.getItem(id);
+			if (settings[id] !== null)
+				document.getElementById(id).value = settings[id];
+			else
+				settings[id] = document.getElementById(id).value;
+		});
+		$('.notification').on('change', (e) => {
+			const id = e.target.id;
+			let value;
+			if (e.target.type === 'number')
+				value = e.target.value;
+			else {
+				value = e.target.checked;
+				if (id === 'text-notification')
+					Notification.requestPermission().then(function (result) {
+						if (result === 'denied' || result === 'default') {
+							document.getElementById('text-notification').checked = false;
+						}
+					});
+			}
+			localStorage.setItem(id, value);
+			settings[id] = value;
+		});
 
-var dateOnTheLeft = new Date();
-var startLimit = new Date();
+		var dateOnTheLeft = new Date();
+		var startLimit = new Date();
 
-// add dates
-for(let i=0; i<days; ++i) {
-  addToContainer('date', dateToString(dateOnTheLeft));
-  dateOnTheLeft.setDate(dateOnTheLeft.getDate() + 1);
-}
-// add hours
-for(let i=0; i<days; ++i) {
-  for(let j=0; j<24; ++j) {
-    addToContainer('hour', j);
-  }
-}
+		// add dates
+		for (let i = 0; i < days; ++i) {
+			addToContainer('date', dateToString(dateOnTheLeft));
+			dateOnTheLeft.setDate(dateOnTheLeft.getDate() + 1);
+		}
+		// add hours
+		for (let i = 0; i < days; ++i) {
+			for (let j = 0; j < 24; ++j) {
+				addToContainer('hour', j);
+			}
+		}
 
-stripTime(startLimit); // last midnight
-stripTime(dateOnTheLeft); // end limit, 3 days from now midnight
+		stripTime(startLimit); // last midnight
+		stripTime(dateOnTheLeft); // end limit, 3 days from now midnight
 
-$.getJSON('https://api.warframestat.us/pc/cetusCycle', function(data){
-  let activation;
-  try {
-    activation = (new Date(data.expiry)).getTime();
-    if(data.isDay)
-      activation += 3000000;
-    localStorage.setItem('activation', activation);
-  }
-  catch (e) {
-    if(e.name == 'TypeError') {
-      activation = new Number(localStorage.getItem('activation'));
-      if(activation == 0) {
-        window.setTimeout(window.location.reload.bind(window.location), 30000);
-        return;
-      }
-    }
-    else
-      throw e;
-  }
-  var date = new Date(activation);
-  // go back a few full cycles
-  while(date > startLimit) {
-    changeDate(date, 'full');
-  }
-  for(let i=0; date < dateOnTheLeft; ++i) {
-    let first = false;
-    let strTime = '';
-    
-    if(date < startLimit)
-      first = true;
-    else
-      strTime = timeToString(date) + ' - ';
-    
-    let cycle = dayCycle[i%2]; // day or night
-    changeDate(date, cycle); // go forward 50/100 minutes
-    
-    if(date < startLimit)
-      continue;
-    
-    // first and last cycles are not full; we don't add time because they can be too short to display
-    if(first) {
-      let length = (date - startLimit) / (1000 * 60 * 2);
-      addToContainer(cycle, '', length);
-    }
-    else if(date > dateOnTheLeft) {
-      let length = (dateOnTheLeft - endTimes[endTimes.length-1].date) / (1000 * 60 * 2);
-      addToContainer(cycle, '', length);
-    }
-    else {
-      addToContainer(cycle, strTime + timeToString(date));
-    }
-    endTimes.push({cycle: cycle, date: new Date(+date)});
-  }
-  updateTimer();
-  window.setInterval(updateTimer, 1000);
-});
+		$.getJSON('https://api.warframestat.us/pc/cetusCycle', function (data) {
+			let activation;
+			try {
+				activation = (new Date(data.expiry)).getTime();
+				if (data.isDay)
+					activation += 3000000;
+				localStorage.setItem('activation', activation);
+			}
+			catch (e) {
+				if (e.name == 'TypeError') {
+					activation = new Number(localStorage.getItem('activation'));
+					if (activation == 0) {
+						window.setTimeout(window.location.reload.bind(window.location), 30000);
+						return;
+					}
+				}
+				else
+					throw e;
+			}
+			var date = new Date(activation);
+			// go back a few full cycles
+			while (date > startLimit) {
+				changeDate(date, 'full');
+			}
+			for (let i = 0; date < dateOnTheLeft; ++i) {
+				let first = false;
+				let strTime = '';
 
-  </script>
+				if (date < startLimit)
+					first = true;
+				else
+					strTime = timeToString(date) + ' - ';
+
+				let cycle = dayCycle[i % 2]; // day or night
+				changeDate(date, cycle); // go forward 50/100 minutes
+
+				if (date < startLimit)
+					continue;
+
+				// first and last cycles are not full; we don't add time because they can be too short to display
+				if (first) {
+					let length = (date - startLimit) / (1000 * 60 * 2);
+					if (length > 0) addToContainer(cycle, '', length);
+				}
+				else if (date > dateOnTheLeft) {
+					let length = (dateOnTheLeft - endTimes[endTimes.length - 1].date) / (1000 * 60 * 2);
+					if (length > 0) addToContainer(cycle, '', length);
+				}
+				else {
+					addToContainer(cycle, strTime + timeToString(date));
+				}
+				endTimes.push({ cycle: cycle, date: new Date(+date) });
+			}
+			updateTimer();
+			window.setInterval(updateTimer, 1000);
+		});
+
+	</script>
 </body>
+
 </html>
