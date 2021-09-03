@@ -22,7 +22,7 @@
   --hour-height: 30px;
   --hour-width: var(--hour-height);
   --date-height: calc(var(--hour-height) * 24);
-  --date-width: 90px;
+  --date-width: 100px;
   --day-night-width: 180px;
   --container-height: calc(var(--days) * var(--date-height));
   --container-width: calc(calc(var(--date-width) + var(--hour-width)) + var(--day-night-width));
@@ -54,8 +54,8 @@ body {
 #now {
   position: absolute;
   top: 0;
-  left: 90px;
-  width: 30px;
+  left: var(--date-width);
+  width: var(--hour-width);
   height: 1px;
   z-index: 2;
   background: red;
@@ -124,7 +124,7 @@ function addToContainer(class_, text, overWritePx) {
 
 function dateToString(date) {
   // YYYY-MM-DD to avoid confusion with MM/DD/YYYY and DD.MM.YYYY
-  return "" + date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate()
+  return "" + date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, '0') + "-" + date.getDate().toString().padStart(2, '0')
 }
 
 function timeToString(date) {
