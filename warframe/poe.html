@@ -45,7 +45,7 @@ body {
   flex-flow: column wrap;
   height: var(--container-height);
   width: var(--container-width);
-  overflow: auto;
+  overflow: hidden;
   align-content: flex-start;
   border: 1px solid black;
   position: relative;
@@ -304,11 +304,13 @@ $.getJSON('https://api.warframestat.us/pc/cetusCycle', function(data){
     // first and last cycles are not full; we don't add time because they can be too short to display
     if(first) {
       let length = (date - startLimit) / (1000 * 60 * 2);
-      addToContainer(cycle, '', length);
+      if(length > 0)
+        addToContainer(cycle, '', length);
     }
     else if(date > dateOnTheLeft) {
       let length = (dateOnTheLeft - endTimes[endTimes.length-1].date) / (1000 * 60 * 2);
-      addToContainer(cycle, '', length);
+      if(length > 0)
+        addToContainer(cycle, '', length);
     }
     else {
       addToContainer(cycle, strTime + timeToString(date));
